@@ -2,16 +2,31 @@ package elevator.controller;
 
 public class ElevatorSharedWIP {
 	
-	public static int UP = 1;
-	public static int DOWN = -1;
-	public static int STILL = 0;
+	static final int UP = 1;
+	static final int DOWN = -1;
+	static final int STILL = 0;
 	
-	private boolean floorPress[];
 	private int direction;
+	private int floor;
 	
-	public ElevatorSharedWIP(int floors){
-		floorPress = new boolean[floors];
+	ElevatorSharedWIP(){
 		direction = 0;
+		floor = 0;
+	}
+	
+	void setDirection(int direction){
+		this.direction = direction;
+	}
+	
+	int getDirection(){
+		return this.direction;
 	}
 
+	void setFloor(int floor) {
+		this.floor = floor;
+	}
+	
+	int getFloor() {
+		return floor;
+	}
 }

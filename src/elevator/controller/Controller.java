@@ -7,21 +7,33 @@ import elevator.rmi.*;
 
 public class Controller implements Runnable, ActionListener{
 	
-	private int topFloor, numElevators;
+	private ElevatorController[] worker;
+	private ElevatorSharedWIP[] workerData;
 	
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-
+		new Thread(new Controller()).start();
+	}
+	
+	private void init() throws Exception{
+		MakeAll.init();
+		int numFloors = MakeAll.getNumberOfFloors();
+		int numElevators = MakeAll.getNumberOfElevators();
+		for(int i = 0; i < numElevators; i++){
+			workerData[i] = new ElevatorSharedWIP();
+			worker[i] = new ElevatorController(MakeAll.getElevator(i+1), numFloors);
+			new Thread(worker[i]).start();
+		}
 	}
 
 	@Override
 	public void run() {
 		try{
-			MakeAll.init();
-			MakeAll.addFloorListener(this);
+			init();
+			
 		}catch(Exception e){
 			e.printStackTrace();
 			System.exit(0);
