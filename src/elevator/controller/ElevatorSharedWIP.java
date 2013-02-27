@@ -8,10 +8,12 @@ public class ElevatorSharedWIP {
 	
 	private int direction;
 	private int floor;
+	private double position;
 	
 	ElevatorSharedWIP(){
-		direction = 0;
+		direction = STILL;
 		floor = 0;
+		position = 0;
 	}
 	
 	void setDirection(int direction){
@@ -29,4 +31,14 @@ public class ElevatorSharedWIP {
 	int getFloor() {
 		return floor;
 	}
+
+	double getPosition() {
+		return position;
+	}
+
+	void setPosition(double position) {
+		this.position = position;
+	}
+	
+	
 }
