@@ -17,14 +17,15 @@ public class ElevatorController implements Runnable, ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
+		System.out.println(e.getActionCommand());
 
 	}
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-
+		while(true){
+			
+		}
 	}
 
 }
