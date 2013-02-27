@@ -1,0 +1,7 @@
+/*
+!/src
+/src/*
+!/src/elevator
+/src/elevator/*
+!/src/elevator/controller
+!/.gitignore
