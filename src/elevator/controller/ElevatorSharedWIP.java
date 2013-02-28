@@ -12,12 +12,13 @@ public class ElevatorSharedWIP {
 	private boolean floorRequest[];
 	private int topFloor;
 	
+	/*
 	ElevatorSharedWIP(){
 		direction = STILL;
 		floor = 0;
 		position = 0;
 	}
-	
+	*/
 	ElevatorSharedWIP(int numFloors){
 		direction = STILL;
 		floor = 0;
@@ -58,7 +59,10 @@ public class ElevatorSharedWIP {
 	}
 	
 	boolean[] getFloorRequestSnapshot(){
-		boolean copy[] = floorRequest;
+		boolean copy[] = new boolean[floorRequest.length];
+		for(int i = 0; i < floorRequest.length; i++){
+			copy[i] = floorRequest[i];
+		}
 		return copy;
 	}
 	
