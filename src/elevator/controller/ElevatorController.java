@@ -71,6 +71,7 @@ public class ElevatorController implements Runnable, ActionListener {
 				for(int i = 0; i < shared.getNumberOfFloors(); i++){
 					shared.setFloorRequestAtIndex(i,false);
 				}
+				shared.setDirection(ElevatorSharedWIP.STILL);
 				if(notMoving.availablePermits() == 0)
 					notMoving.release();
 			}else{ // Add to floor request
