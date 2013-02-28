@@ -113,7 +113,7 @@ public class ElevatorController implements Runnable, ActionListener {
 				}else{
 					shared.setDirection(ElevatorSharedWIP.STILL);
 					notMoving.release();
-					//this.wait();
+					//shared.wait();
 				}
 
 			}

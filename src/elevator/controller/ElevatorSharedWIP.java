@@ -56,6 +56,7 @@ public class ElevatorSharedWIP {
 	
 	void setFloorRequestAtIndex(int index, boolean bool){
 		this.floorRequest[index] = bool;
+		//this.notify();
 	}
 	
 	boolean[] getFloorRequestSnapshot(){
