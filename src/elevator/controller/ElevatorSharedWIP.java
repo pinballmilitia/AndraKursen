@@ -9,11 +9,20 @@ public class ElevatorSharedWIP {
 	private int direction;
 	private int floor;
 	private double position;
+	private boolean floorRequest[];
+	private int topFloor;
 	
 	ElevatorSharedWIP(){
 		direction = STILL;
 		floor = 0;
 		position = 0;
+	}
+	
+	ElevatorSharedWIP(int numFloors){
+		direction = STILL;
+		floor = 0;
+		position = 0;
+		floorRequest = new boolean[numFloors];
 	}
 	
 	void setDirection(int direction){
@@ -40,5 +49,20 @@ public class ElevatorSharedWIP {
 		this.position = position;
 	}
 	
+	boolean getFloorRequestAtIndex(int index){
+		return floorRequest[index];
+	}
 	
+	void setFloorRequestAtIndex(int index, boolean bool){
+		this.floorRequest[index] = bool;
+	}
+	
+	boolean[] getFloorRequestSnapshot(){
+		boolean copy[] = floorRequest;
+		return copy;
+	}
+	
+	int getNumberOfFloors(){
+		return floorRequest.length;
+	}
 }
