@@ -53,6 +53,8 @@ public class ElevatorController implements Runnable, ActionListener {
 					elevator.stop();
 					notMoving.release();
 				}
+			}else{
+				shared.setFloor(-1); // moving
 			}
 			// counter deadlock at extreme positions
 			if(position == (shared.getNumberOfFloors()-1) || position == 0){
@@ -98,50 +100,7 @@ public class ElevatorController implements Runnable, ActionListener {
 						elevator.close();
 						notMoving.release();
 					}else{
-						if(shared.getDirection() == ElevatorSharedWIP.STILL){
-							for(int i = 0; i < shared.getNumberOfFloors(); i++){
-								if(shared.getFloorRequestAtIndex(i)){
-									if(i < elevator.getScalePosition()){
-										shared.setDirection(ElevatorSharedWIP.DOWN);
-									}else{
-										shared.setDirection(ElevatorSharedWIP.UP);
-									}
-									break;
-								}
-							}
-						}else if(shared.getDirection() == ElevatorSharedWIP.UP){
-							boolean higher = false;
-							for(int i = (elevator.getScalePosition()); i < shared.getNumberOfFloors(); i++){
-								if(shared.getFloorRequestAtIndex(i)){
-									higher = true;
-									break;
-								}
-							}
-							if(!higher){
-								if(gotWork()){
-									shared.setDirection(ElevatorSharedWIP.DOWN);
-								}else{
-									shared.setDirection(ElevatorSharedWIP.STILL);
-									notMoving.release();
-								}
-							}
-						}else{
-							boolean lower = false;
-							for(int i = (elevator.getScalePosition()-1); i >= 0; i--){
-								if(shared.getFloorRequestAtIndex(i)){
-									lower = true;
-									break;
-								}
-							}
-							if(!lower){
-								if(gotWork()){
-									shared.setDirection(ElevatorSharedWIP.UP);
-								}else{
-									shared.setDirection(ElevatorSharedWIP.STILL);
-									notMoving.release();
-								}
-							}
-						}
+						findDirection();
 					}
 					if(shared.getDirection() != ElevatorSharedWIP.STILL){
 						if(shared.getDirection() == ElevatorSharedWIP.DOWN){
@@ -171,6 +130,53 @@ public class ElevatorController implements Runnable, ActionListener {
 				break;
 		}
 		return work;
+	}
+	
+	private void findDirection() throws RemoteException{
+		if(shared.getDirection() == ElevatorSharedWIP.STILL){
+			for(int i = 0; i < shared.getNumberOfFloors(); i++){
+				if(shared.getFloorRequestAtIndex(i)){
+					if(i < elevator.getScalePosition()){
+						shared.setDirection(ElevatorSharedWIP.DOWN);
+					}else{
+						shared.setDirection(ElevatorSharedWIP.UP);
+					}
+					break;
+				}
+			}
+		}else if(shared.getDirection() == ElevatorSharedWIP.UP){
+			boolean higher = false;
+			for(int i = (elevator.getScalePosition()); i < shared.getNumberOfFloors(); i++){
+				if(shared.getFloorRequestAtIndex(i)){
+					higher = true;
+					break;
+				}
+			}
+			if(!higher){
+				if(gotWork()){
+					shared.setDirection(ElevatorSharedWIP.DOWN);
+				}else{
+					shared.setDirection(ElevatorSharedWIP.STILL);
+					notMoving.release();
+				}
+			}
+		}else{
+			boolean lower = false;
+			for(int i = (elevator.getScalePosition()-1); i >= 0; i--){
+				if(shared.getFloorRequestAtIndex(i)){
+					lower = true;
+					break;
+				}
+			}
+			if(!lower){
+				if(gotWork()){
+					shared.setDirection(ElevatorSharedWIP.UP);
+				}else{
+					shared.setDirection(ElevatorSharedWIP.STILL);
+					notMoving.release();
+				}
+			}
+		}
 	}
 
 	double getPrecision() {
