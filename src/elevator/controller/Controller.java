@@ -4,8 +4,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import elevator.rmi.*;
 
+/**
+ * 
+ * This is the main controller. It runs as a thread and listens
+ * for button presses from floor panels. 
+ * On creation it constructs elevatorHandlers, one for each 
+ * elevator. Also created is shared objects for communication between
+ * main controller and elevatorHandler communication.
+ *
+ */
 public class Controller implements Runnable, ActionListener{
 
+	private final String FLOOR_BUTTON = "b";
 	private ElevatorController[] worker;
 	private ElevatorSharedWIP[] workerData;
 	private int numFloors;
@@ -38,76 +48,69 @@ public class Controller implements Runnable, ActionListener{
 
 	@Override
 	public void run() {
-		try{
+		try {
 			init();
-
-		}catch(Exception e){
+		}
+		catch(Exception e){
 			e.printStackTrace();
 			System.exit(0);
 		}
-
 	}
 
-	/**
-	 * Floor button actionlistener
-	 * 	 
-	 */
 	@Override
-	public void actionPerformed(ActionEvent e) {
-		//System.out.println(e.getActionCommand());
+	public void actionPerformed(ActionEvent actionEvent) {
 
 		//Split command
-		String command[] = e.getActionCommand().split("\\s");
+		String command[] = actionEvent.getActionCommand().split("\\s");
 
-		//If command is from floor button
-		if(command[0].equals("b")) {
+		if(command.length == 3) {
+			
+			//If command is from floor button (should not be anything else)
+			if(command[0].equals(FLOOR_BUTTON)) {
 
-			//COMMAND: b <floor> <direction>
+				//COMMAND: b <floor> <direction>
 
-			//Caller floor level
-			int floor = Integer.parseInt(command[1]);
+				int floor = -1;
+				int direction = -1;
+				try {
+					floor = Integer.parseInt(command[1]);
+					direction = Integer.parseInt(command[2]); 
 
-			//Wanted direction
-			int direction = Integer.parseInt(command[2]); 
+				} catch (NumberFormatException e) {
+					System.err.println("Main controller: ERROR PARSING COMMAND.\nIgnoring command\n");
+					return;
+				}
 
-			System.out.println("Elevator XXXXX " + floor);
-			/**1**/
-			//If there is a sleeping elevator already on <floor> -> open doors
-			int index = findSleepingElevatorOnFloor(floor);
-			if(index != -1) {
-				System.out.println("Elevator #" + (index + 1) + " is already on floor " + floor);
-				workerData[index].setFloorRequestAtIndex(floor, true);
-				return;
-			}
+				//Try to find a sleeping elevator already on floor
+				int index = findSleepingElevatorOnFloor(floor);
+				if(index != -1) {
+					System.out.println("Elevator #" + (index + 1) + " is already on floor " + floor);
+					workerData[index].setFloorRequestAtIndex(floor, true);
+					return;
+				}
 
-			/**2**/
-			//if there is an elevator going to <floor> AND MOVING IN CORRECT DIRECTION - wait for that elevator
-			//Find index of elevator going to floor
-			index = findElevatorGoingToFloorInDirection(floor, direction);
-			if(index != -1) {
-				//Elevator FOUND!
-				System.out.println("Elevator #" + index + " is already on its way to floor " + floor);
-				//elevator will move to floor without our help
-				return;
-			}
+				//Try to find an elevator on its way to floor moving in same direction as caller wish to travel
+				index = findElevatorGoingToFloorInDirection(floor, direction);
+				if(index != -1) {
+					System.out.println("Elevator #" + index + " is already on its way to floor " + floor);
+					return;
+				}
 
-			/**3**/
-			//If there is an elevator that will pass <floor> and move in <direction>, ask it to stop at <floor>
-			//switch(direction)
-			index = findElevatorPassingFloorInDirection(floor, direction);
-			if(index != -1) {
-				//ask elevator to stop at caller floor so he can get on
-				System.out.println("Elevator #" + index + " is asked to go all the way to on its way to floor " + floor);
-				workerData[index].setFloorRequestAtIndex(floor, true);
-				return;
-			}
+				//Try to find an elevator that is moving towards floor in same direction as caller wish to travel
+				index = findElevatorPassingFloorInDirection(floor, direction);
+				if(index != -1) {
+					//ask elevator to stop at caller floor so he can get on
+					System.out.println("Elevator #" + index + " is asked to stop on its way");
+					workerData[index].setFloorRequestAtIndex(floor, true);
+					return;
+				}
 
-			/**4**/ 
-			//calculate closest <sleeping> elevator and call for it
-			index = findNearestSleepingElevator(floor);
-			if(index != -1) {
-				workerData[index].setFloorRequestAtIndex(floor, true);
-				return;
+				//Try to find the closest sleeping (still) elevator
+				index = findNearestSleepingElevator(floor);
+				if(index != -1) {
+					workerData[index].setFloorRequestAtIndex(floor, true);
+					return;
+				}
 			}
 		}
 	}
@@ -127,46 +130,16 @@ public class Controller implements Runnable, ActionListener{
 	//elevator is found
 	private int findElevatorGoingToFloorInDirection(int floor, int direction) {
 
-		switch (direction) {
-		case ElevatorSharedWIP.DOWN:
-			for (int i = 0; i < workerData.length; i++) {
-				if(workerData[i].getDirection() == ElevatorSharedWIP.DOWN) {
-					if(workerData[i].getPosition() > floor) {
-						if(workerData[i].getFloorRequestAtIndex(floor)) {
-							return i;
-						}
+		for (int i = 0; i < workerData.length; i++) {
+			if(workerData[i].getDirection() == direction) {
+				if((direction == ElevatorSharedWIP.DOWN && workerData[i].getPosition() > floor) || 
+						(direction == ElevatorSharedWIP.UP && workerData[i].getPosition() < floor)) {
+					if(workerData[i].getFloorRequestAtIndex(floor)) {
+						return i;
 					}
 				}
 			}
-			break;
-
-		case ElevatorSharedWIP.UP:
-			for (int i = 0; i < workerData.length; i++) {
-				if(workerData[i].getDirection() == ElevatorSharedWIP.UP) {
-					if(workerData[i].getPosition() < floor) {
-						if(workerData[i].getFloorRequestAtIndex(floor)) {
-							return i;
-						}
-					}
-				}
-			}
-			break;
-
-		default:
-			break;
 		}
-
-
-		//Check if there is an elevator going to 'floor' or if there is one already there
-
-		//if elevator already at floor and still, we are done
-
-		//FOR ALL ELEVATORS§
-		//if direction == up
-		//check if elevator direction is up
-		//check if elevator is below floor 
-		//check if there is floor request for 'floor'
-		//if yes to all above -> setPressed()
 
 		return -1;
 	}
@@ -175,29 +148,13 @@ public class Controller implements Runnable, ActionListener{
 	//as callers wants to move in
 	private int findElevatorPassingFloorInDirection(int floor, int direction) {
 
-		switch (direction) {
-		case ElevatorSharedWIP.DOWN:
-			for (int i = 0; i < workerData.length; i++) {
-				if(workerData[i].getDirection() == ElevatorSharedWIP.DOWN) {
-					if(workerData[i].getPosition() > floor) {
-						return i;
-					}
+		for (int i = 0; i < workerData.length; i++) {
+			if(workerData[i].getDirection() == direction) {
+				if((direction == ElevatorSharedWIP.DOWN && workerData[i].getPosition() > floor) || 
+						(direction == ElevatorSharedWIP.UP && workerData[i].getPosition() < floor)) {					
+					return i;
 				}
 			}
-			break;
-
-		case ElevatorSharedWIP.UP:
-			for (int i = 0; i < workerData.length; i++) {
-				if(workerData[i].getDirection() == ElevatorSharedWIP.UP) {
-					if(workerData[i].getPosition() < floor) {
-						return i;
-					}
-				}
-			}
-			break;
-
-		default:
-			break;
 		}
 
 		return -1;
@@ -205,19 +162,25 @@ public class Controller implements Runnable, ActionListener{
 
 	//Return index of the nearest elevator without work or -1 if none found
 	private int findNearestSleepingElevator(int floor) {
-		
+
+		//Array that will contain distances from floor to elevator
 		int distances[] = new int[workerData.length];
-		
+
+		/*
+		 * For each elevator, calculate the distance from the elevators
+		 * current floor to the floor call is made from.
+		 */
 		for (int i = 0; i < workerData.length; i++) {
 			distances[i] = Math.abs(floor - workerData[i].getFloor());
 		}
-		
+
+		//Find shortest distance == the closest elevator
 		int min_index = 0;
 		for (int i = 1; i < distances.length; i++) {
 			if(distances[min_index] > distances[i])
 				min_index = i;
 		}
-		
+
 		//this check should be made MUCH earlier
 		if(workerData[min_index].getDirection() == ElevatorSharedWIP.STILL)
 			return min_index;
