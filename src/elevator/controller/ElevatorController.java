@@ -42,7 +42,7 @@ public class ElevatorController implements Runnable, ActionListener {
 			if(command[0].equals("f")){
 				float position = Float.parseFloat(command[2]);
 				shared.setPosition(position);
-				int currentFloor = elevator.getScalePosition();
+				int currentFloor = 0;//elevator.getScalePosition();
 
 				currentFloor = (int)(position+0.5);
 				double diff = position - currentFloor; 
@@ -91,8 +91,13 @@ public class ElevatorController implements Runnable, ActionListener {
 	public void run() {
 		try {
 			while(true){
+				// Do not run code while moving elevator
 				notMoving.acquire();
+				
+				// Check if there is the elevator if requested to move
 				if(gotWork()){
+					// If the elevator is on a floor where it supposed to stop at
+					// open the doors
 					if(shared.getFloorRequestAtIndex(shared.getFloor())){
 						elevator.open();
 						shared.setFloorRequestAtIndex(elevator.getScalePosition(),false);
@@ -102,9 +107,12 @@ public class ElevatorController implements Runnable, ActionListener {
 						Thread.sleep(3000);
 						elevator.close();
 						notMoving.release();
-					}else{
+					}
+					// Otherwise find which way the elevator is supposed to move
+					else{
 						findDirection();
 					}
+					// Move the elevator if necessary
 					if(shared.getDirection() != ElevatorSharedWIP.STILL){
 						if(shared.getDirection() == ElevatorSharedWIP.DOWN){
 							elevator.down();
@@ -113,7 +121,9 @@ public class ElevatorController implements Runnable, ActionListener {
 						}
 
 					}
-				}else{
+				}
+				// If no request sleep until there is one
+				else{
 					shared.setDirection(ElevatorSharedWIP.STILL);
 					notMoving.release();
 
@@ -130,16 +140,26 @@ public class ElevatorController implements Runnable, ActionListener {
 
 	}
 
+	/**
+	 * Looks through the floorRequest snapshot to see it there is a request
+	 * to move the elevator
+	 * 
+	 * @return true if any in the floorRequest is true;
+	 */
 	private boolean gotWork(){
 		boolean work = false;
-		for(int i = 0; i <= shared.getNumberOfFloors()-1; i++){
-			work = work || shared.getFloorRequestAtIndex(i);
+		boolean requests[] = shared.getFloorRequestSnapshot();
+		for(int i = 0; i < requests.length; i++){
+			work = work || requests[i];
 			if(work)
 				break;
 		}
 		return work;
 	}
 
+	/*
+	 * 
+	 */
 	private void findDirection() throws RemoteException{
 		if(shared.getDirection() == ElevatorSharedWIP.STILL){
 			for(int i = 0; i < shared.getNumberOfFloors(); i++){
@@ -187,10 +207,19 @@ public class ElevatorController implements Runnable, ActionListener {
 		}
 	}
 
+	/**
+	 * Return the precison of this elevator controller
+	 * 
+	 * @return
+	 */
 	double getPrecision() {
 		return precision;
 	}
 
+	/**
+	 * 
+	 * @param precision
+	 */
 	void setPrecision(double precision) {
 		this.precision = precision;
 	}
