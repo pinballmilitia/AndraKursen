@@ -10,7 +10,6 @@ public class ElevatorSharedWIP {
 	private int floor;
 	private double position;
 	private boolean floorRequest[];
-	private int topFloor;
 	
 	/*
 	ElevatorSharedWIP(){
@@ -26,40 +25,43 @@ public class ElevatorSharedWIP {
 		floorRequest = new boolean[numFloors];
 	}
 	
-	void setDirection(int direction){
+	synchronized void setDirection(int direction){
 		this.direction = direction;
 	}
 	
-	int getDirection(){
+	synchronized int getDirection(){
 		return this.direction;
 	}
 
-	void setFloor(int floor) {
+	synchronized void setFloor(int floor) {
 		this.floor = floor;
 	}
 	
-	int getFloor() {
+	synchronized int getFloor() {
 		return floor;
 	}
 
-	double getPosition() {
+	synchronized double getPosition() {
 		return position;
 	}
 
-	void setPosition(double position) {
+	synchronized void setPosition(double position) {
 		this.position = position;
 	}
 	
-	boolean getFloorRequestAtIndex(int index){
-		return floorRequest[index];
+	synchronized boolean getFloorRequestAtIndex(int index){
+		if(index > -1)
+			return floorRequest[index];
+		else
+			return false;
 	}
 	
-	void setFloorRequestAtIndex(int index, boolean bool){
+	synchronized void setFloorRequestAtIndex(int index, boolean bool){
 		this.floorRequest[index] = bool;
-		//this.notify();
+		this.notify(); // wake up threads waiting for new input
 	}
 	
-	boolean[] getFloorRequestSnapshot(){
+	synchronized boolean[] getFloorRequestSnapshot(){
 		boolean copy[] = new boolean[floorRequest.length];
 		for(int i = 0; i < floorRequest.length; i++){
 			copy[i] = floorRequest[i];

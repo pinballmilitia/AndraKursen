@@ -9,18 +9,20 @@ import elevator.rmi.Elevator;
 
 public class ElevatorController implements Runnable, ActionListener {
 	
+	private static final double DEFPRECISION = 0.001;
+
 	private final Semaphore notMoving =  new Semaphore(1);
-	
+
 	private final Elevator elevator;
 	//private boolean shared.getFloorRequestAtIndex(];
 	private ElevatorSharedWIP shared;
 	private double precision;
-	
+
 	public ElevatorController(Elevator elevator, ElevatorSharedWIP shared) throws RemoteException{
 		this.elevator = elevator;
 		//this.floorRequest = new boolean[numFloors+1];
 		this.shared = shared;
-		this.precision = 0.1;
+		this.precision = DEFPRECISION;
 		shared.setFloor(elevator.getScalePosition());
 		shared.setPosition(elevator.whereIs());
 	}
@@ -30,56 +32,56 @@ public class ElevatorController implements Runnable, ActionListener {
 		//System.out.println("Move to " + floor);
 		//this.notify();
 	}
-	*/
+	 */
 
 	@Override
 	public void actionPerformed(ActionEvent ae) {
 		try{
-		String[] command = ae.getActionCommand().split(" ");
-		//System.out.println(command[0] + " " + command[2]);
-		if(command[0].equals("f")){
-			float position = Float.parseFloat(command[2]);
-			shared.setPosition(position);
-			int currentFloor = elevator.getScalePosition();
-			
-			currentFloor = (int)(position+0.5);
-			double diff = position - currentFloor; 
-			//System.out.println(diff);
-			if(diff < precision && diff > -precision){
-				elevator.setScalePosition(currentFloor);
-				shared.setFloor(currentFloor);
-				//System.out.println("Stop on floor " + currentFloor + "? " + shared.getFloorRequestAtIndex(currentFloor]);
-				if(shared.getFloorRequestAtIndex(currentFloor)){
+			String[] command = ae.getActionCommand().split(" ");
+			//System.out.println(command[0] + " " + command[2]);
+			if(command[0].equals("f")){
+				float position = Float.parseFloat(command[2]);
+				shared.setPosition(position);
+				int currentFloor = elevator.getScalePosition();
+
+				currentFloor = (int)(position+0.5);
+				double diff = position - currentFloor; 
+				//System.out.println(diff);
+				if(diff < precision && diff > -precision){
+					elevator.setScalePosition(currentFloor);
+					shared.setFloor(currentFloor);
+					//System.out.println("Stop on floor " + currentFloor + "? " + shared.getFloorRequestAtIndex(currentFloor]);
+					if(shared.getFloorRequestAtIndex(currentFloor)){
+						elevator.stop();
+						notMoving.release();
+					}
+				}else{
+					shared.setFloor(-1); // moving
+				}
+				// counter deadlock at extreme positions
+				if(position == (shared.getNumberOfFloors()-1) || position == 0){
+					shared.setDirection(ElevatorSharedWIP.STILL);
+					if(notMoving.availablePermits() == 0)
+						notMoving.release();
+				}
+			}
+			// Internal elevator button presses
+			else if(command[0].equals("p")){
+				int floor = Integer.parseInt(command[2]);
+				if(floor == 32000){ // STOP the elevator
 					elevator.stop();
-					notMoving.release();
+					for(int i = 0; i < shared.getNumberOfFloors(); i++){
+						shared.setFloorRequestAtIndex(i,false);
+					}
+					shared.setDirection(ElevatorSharedWIP.STILL);
+					if(notMoving.availablePermits() == 0)
+						notMoving.release();
+				}else{ // Add to floor request
+					if(floor > shared.getNumberOfFloors())
+						throw new IllegalArgumentException();
+					shared.setFloorRequestAtIndex(floor, true);
 				}
-			}else{
-				shared.setFloor(-1); // moving
 			}
-			// counter deadlock at extreme positions
-			if(position == (shared.getNumberOfFloors()-1) || position == 0){
-				shared.setDirection(ElevatorSharedWIP.STILL);
-				if(notMoving.availablePermits() == 0)
-					notMoving.release();
-			}
-		}
-		// Internal elevator button presses
-		else if(command[0].equals("p")){
-			int floor = Integer.parseInt(command[2]);
-			if(floor == 32000){ // STOP the elevator
-				elevator.stop();
-				for(int i = 0; i < shared.getNumberOfFloors(); i++){
-					shared.setFloorRequestAtIndex(i,false);
-				}
-				shared.setDirection(ElevatorSharedWIP.STILL);
-				if(notMoving.availablePermits() == 0)
-					notMoving.release();
-			}else{ // Add to floor request
-				if(floor > shared.getNumberOfFloors())
-					throw new IllegalArgumentException();
-				shared.setFloorRequestAtIndex(floor, true);
-			}
-		}
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -91,7 +93,7 @@ public class ElevatorController implements Runnable, ActionListener {
 			while(true){
 				notMoving.acquire();
 				if(gotWork()){
-					if(shared.getFloorRequestAtIndex(elevator.getScalePosition())){
+					if(shared.getFloorRequestAtIndex(shared.getFloor())){
 						elevator.open();
 						shared.setFloorRequestAtIndex(elevator.getScalePosition(),false);
 						if(!gotWork()){
@@ -109,20 +111,25 @@ public class ElevatorController implements Runnable, ActionListener {
 						}else{
 							elevator.up();
 						}
-						
+
 					}
 				}else{
 					shared.setDirection(ElevatorSharedWIP.STILL);
 					notMoving.release();
-					//shared.wait();
+
+					// Suspend the thread while no new input
+					synchronized(shared){
+						shared.wait();
+					}
 				}
 
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
 	}
-	
+
 	private boolean gotWork(){
 		boolean work = false;
 		for(int i = 0; i <= shared.getNumberOfFloors()-1; i++){
@@ -132,12 +139,12 @@ public class ElevatorController implements Runnable, ActionListener {
 		}
 		return work;
 	}
-	
+
 	private void findDirection() throws RemoteException{
 		if(shared.getDirection() == ElevatorSharedWIP.STILL){
 			for(int i = 0; i < shared.getNumberOfFloors(); i++){
 				if(shared.getFloorRequestAtIndex(i)){
-					if(i < elevator.getScalePosition()){
+					if(i < elevator.whereIs()){
 						shared.setDirection(ElevatorSharedWIP.DOWN);
 					}else{
 						shared.setDirection(ElevatorSharedWIP.UP);
