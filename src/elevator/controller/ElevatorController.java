@@ -7,6 +7,15 @@ import java.util.concurrent.Semaphore;
 
 import elevator.rmi.Elevator;
 
+/**
+ * The class ElevatorController controls an elevator via RMI
+ * It checks if any internal button has been pressed or if the main Controller
+ * has push any button.
+ * If a button has been pressed this controller will move the elevator to that floor and
+ * open the doors.  
+ * Communication with the main Controller goes through a shared ElevatorShared object.
+ * 
+ */
 public class ElevatorController implements Runnable, ActionListener {
 	
 	private static final double DEFPRECISION = 0.001;
@@ -15,10 +24,10 @@ public class ElevatorController implements Runnable, ActionListener {
 
 	private final Elevator elevator;
 	//private boolean shared.getFloorRequestAtIndex(];
-	private ElevatorSharedWIP shared;
+	private ElevatorShared shared;
 	private double precision;
 
-	public ElevatorController(Elevator elevator, ElevatorSharedWIP shared) throws RemoteException{
+	public ElevatorController(Elevator elevator, ElevatorShared shared) throws RemoteException{
 		this.elevator = elevator;
 		//this.floorRequest = new boolean[numFloors+1];
 		this.shared = shared;
@@ -60,7 +69,7 @@ public class ElevatorController implements Runnable, ActionListener {
 				}
 				// counter deadlock at extreme positions
 				if(position == (shared.getNumberOfFloors()-1) || position == 0){
-					shared.setDirection(ElevatorSharedWIP.STILL);
+					shared.setDirection(ElevatorShared.STILL);
 					if(notMoving.availablePermits() == 0)
 						notMoving.release();
 				}
@@ -73,7 +82,7 @@ public class ElevatorController implements Runnable, ActionListener {
 					for(int i = 0; i < shared.getNumberOfFloors(); i++){
 						shared.setFloorRequestAtIndex(i,false);
 					}
-					shared.setDirection(ElevatorSharedWIP.STILL);
+					shared.setDirection(ElevatorShared.STILL);
 					if(notMoving.availablePermits() == 0)
 						notMoving.release();
 				}else{ // Add to floor request
@@ -102,7 +111,7 @@ public class ElevatorController implements Runnable, ActionListener {
 						elevator.open();
 						shared.setFloorRequestAtIndex(elevator.getScalePosition(),false);
 						if(!gotWork()){
-							shared.setDirection(ElevatorSharedWIP.STILL);
+							shared.setDirection(ElevatorShared.STILL);
 						}
 						Thread.sleep(3000);
 						elevator.close();
@@ -113,8 +122,8 @@ public class ElevatorController implements Runnable, ActionListener {
 						findDirection();
 					}
 					// Move the elevator if necessary
-					if(shared.getDirection() != ElevatorSharedWIP.STILL){
-						if(shared.getDirection() == ElevatorSharedWIP.DOWN){
+					if(shared.getDirection() != ElevatorShared.STILL){
+						if(shared.getDirection() == ElevatorShared.DOWN){
 							elevator.down();
 						}else{
 							elevator.up();
@@ -124,7 +133,7 @@ public class ElevatorController implements Runnable, ActionListener {
 				}
 				// If no request sleep until there is one
 				else{
-					shared.setDirection(ElevatorSharedWIP.STILL);
+					shared.setDirection(ElevatorShared.STILL);
 					notMoving.release();
 
 					// Suspend the thread while no new input
@@ -161,18 +170,18 @@ public class ElevatorController implements Runnable, ActionListener {
 	 * 
 	 */
 	private void findDirection() throws RemoteException{
-		if(shared.getDirection() == ElevatorSharedWIP.STILL){
+		if(shared.getDirection() == ElevatorShared.STILL){
 			for(int i = 0; i < shared.getNumberOfFloors(); i++){
 				if(shared.getFloorRequestAtIndex(i)){
 					if(i < elevator.whereIs()){
-						shared.setDirection(ElevatorSharedWIP.DOWN);
+						shared.setDirection(ElevatorShared.DOWN);
 					}else{
-						shared.setDirection(ElevatorSharedWIP.UP);
+						shared.setDirection(ElevatorShared.UP);
 					}
 					break;
 				}
 			}
-		}else if(shared.getDirection() == ElevatorSharedWIP.UP){
+		}else if(shared.getDirection() == ElevatorShared.UP){
 			boolean higher = false;
 			for(int i = (elevator.getScalePosition()); i < shared.getNumberOfFloors(); i++){
 				if(shared.getFloorRequestAtIndex(i)){
@@ -182,9 +191,9 @@ public class ElevatorController implements Runnable, ActionListener {
 			}
 			if(!higher){
 				if(gotWork()){
-					shared.setDirection(ElevatorSharedWIP.DOWN);
+					shared.setDirection(ElevatorShared.DOWN);
 				}else{
-					shared.setDirection(ElevatorSharedWIP.STILL);
+					shared.setDirection(ElevatorShared.STILL);
 					notMoving.release();
 				}
 			}
@@ -198,9 +207,9 @@ public class ElevatorController implements Runnable, ActionListener {
 			}
 			if(!lower){
 				if(gotWork()){
-					shared.setDirection(ElevatorSharedWIP.UP);
+					shared.setDirection(ElevatorShared.UP);
 				}else{
-					shared.setDirection(ElevatorSharedWIP.STILL);
+					shared.setDirection(ElevatorShared.STILL);
 					notMoving.release();
 				}
 			}

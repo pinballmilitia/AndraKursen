@@ -17,7 +17,7 @@ public class Controller implements Runnable, ActionListener{
 
 	private final String FLOOR_BUTTON = "b";
 	private ElevatorController[] worker;
-	private ElevatorSharedWIP[] workerData;
+	private ElevatorShared[] workerData;
 	private int numFloors;
 	private int numElevators;
 
@@ -32,11 +32,11 @@ public class Controller implements Runnable, ActionListener{
 		MakeAll.init();
 		numFloors = MakeAll.getNumberOfFloors();
 		numElevators = MakeAll.getNumberOfElevators();
-		workerData = new ElevatorSharedWIP[numElevators];
+		workerData = new ElevatorShared[numElevators];
 		worker = new ElevatorController[numElevators];
 
 		for(int i = 0; i < numElevators; i++){
-			workerData[i] = new ElevatorSharedWIP(numFloors);
+			workerData[i] = new ElevatorShared(numFloors);
 			worker[i] = new ElevatorController(MakeAll.getElevator(i+1), workerData[i]);
 			worker[i].setPrecision(0.01f);
 			MakeAll.addInsideListener((i+1), worker[i]);
@@ -108,6 +108,7 @@ public class Controller implements Runnable, ActionListener{
 				//Try to find the closest sleeping (still) elevator
 				index = findNearestSleepingElevator(floor);
 				if(index != -1) {
+					System.out.println("Nearest sleeping elevator is " + index);
 					workerData[index].setFloorRequestAtIndex(floor, true);
 					return;
 				}
@@ -132,8 +133,8 @@ public class Controller implements Runnable, ActionListener{
 
 		for (int i = 0; i < workerData.length; i++) {
 			if(workerData[i].getDirection() == direction) {
-				if((direction == ElevatorSharedWIP.DOWN && workerData[i].getPosition() > floor) || 
-						(direction == ElevatorSharedWIP.UP && workerData[i].getPosition() < floor)) {
+				if((direction == ElevatorShared.DOWN && workerData[i].getPosition() > floor) || 
+						(direction == ElevatorShared.UP && workerData[i].getPosition() < floor)) {
 					if(workerData[i].getFloorRequestAtIndex(floor)) {
 						return i;
 					}
@@ -150,8 +151,8 @@ public class Controller implements Runnable, ActionListener{
 
 		for (int i = 0; i < workerData.length; i++) {
 			if(workerData[i].getDirection() == direction) {
-				if((direction == ElevatorSharedWIP.DOWN && workerData[i].getPosition() > floor) || 
-						(direction == ElevatorSharedWIP.UP && workerData[i].getPosition() < floor)) {					
+				if((direction == ElevatorShared.DOWN && workerData[i].getPosition() > floor) || 
+						(direction == ElevatorShared.UP && workerData[i].getPosition() < floor)) {					
 					return i;
 				}
 			}
@@ -177,15 +178,19 @@ public class Controller implements Runnable, ActionListener{
 		//Find shortest distance == the closest elevator
 		int min_index = 0;
 		for (int i = 1; i < distances.length; i++) {
+			if(workerData[i].getDirection() == ElevatorShared.STILL)
 			if(distances[min_index] > distances[i])
 				min_index = i;
 		}
 
 		//this check should be made MUCH earlier
-		if(workerData[min_index].getDirection() == ElevatorSharedWIP.STILL)
+		/*
+		if(workerData[min_index].getDirection() == ElevatorShared.STILL)
 			return min_index;
+			*/
 
-		//default : none found
-		return -1;
+		//default : first elevator "0"
+		return min_index;
+		//return -1;
 	}
 }
