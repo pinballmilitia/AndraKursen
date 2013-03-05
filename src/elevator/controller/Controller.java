@@ -164,14 +164,14 @@ public class Controller implements Runnable, ActionListener{
 	private int findNearestSleepingElevator(int floor) {
 
 		//Array that will contain distances from floor to elevator
-		int distances[] = new int[workerData.length];
+		double distances[] = new double[workerData.length];
 
 		/*
 		 * For each elevator, calculate the distance from the elevators
 		 * current floor to the floor call is made from.
 		 */
 		for (int i = 0; i < workerData.length; i++) {
-			distances[i] = Math.abs(floor - workerData[i].getFloor());
+			distances[i] = Math.abs(floor - workerData[i].getPosition());
 		}
 
 		//Find shortest distance == the closest elevator
