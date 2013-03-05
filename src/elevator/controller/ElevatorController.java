@@ -58,9 +58,9 @@ public class ElevatorController implements Runnable, ActionListener {
 				//System.out.println(diff);
 				if(diff < precision && diff > -precision){
 					elevator.setScalePosition(currentFloor);
-					shared.setFloor(currentFloor);
 					//System.out.println("Stop on floor " + currentFloor + "? " + shared.getFloorRequestAtIndex(currentFloor]);
 					if(shared.getFloorRequestAtIndex(currentFloor)){
+						shared.setFloor(currentFloor);
 						elevator.stop();
 						notMoving.release();
 					}
@@ -70,6 +70,7 @@ public class ElevatorController implements Runnable, ActionListener {
 				// counter deadlock at extreme positions
 				if(position == (shared.getNumberOfFloors()-1) || position == 0){
 					shared.setDirection(ElevatorShared.STILL);
+					shared.setPrioDirection(ElevatorShared.STILL);
 					if(notMoving.availablePermits() == 0)
 						notMoving.release();
 				}
@@ -112,6 +113,7 @@ public class ElevatorController implements Runnable, ActionListener {
 						shared.setFloorRequestAtIndex(elevator.getScalePosition(),false);
 						if(!gotWork()){
 							shared.setDirection(ElevatorShared.STILL);
+							shared.setPrioDirection(ElevatorShared.STILL);
 						}
 						Thread.sleep(3000);
 						elevator.close();
@@ -166,7 +168,7 @@ public class ElevatorController implements Runnable, ActionListener {
 		return work;
 	}
 
-	/*
+	/**
 	 * 
 	 */
 	private void findDirection() throws RemoteException{

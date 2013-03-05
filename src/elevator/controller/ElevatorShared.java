@@ -12,7 +12,7 @@ public class ElevatorShared {
 	static final int DOWN = -1;
 	static final int STILL = 0;
 	
-	private int direction;
+	private int direction, prioDirection;
 	private int floor;
 	private double position;
 	private boolean floorRequest[];
@@ -31,6 +31,7 @@ public class ElevatorShared {
 	 */
 	ElevatorShared(int numFloors){
 		direction = STILL;
+		prioDirection = STILL;
 		floor = 0;
 		position = 0;
 		floorRequest = new boolean[numFloors];
@@ -50,6 +51,20 @@ public class ElevatorShared {
 	 */
 	synchronized int getDirection(){
 		return this.direction;
+	}
+
+	/**
+	 * @return the prioDirection
+	 */
+	synchronized int getPrioDirection() {
+		return prioDirection;
+	}
+
+	/**
+	 * @param prioDirection the prioDirection to set
+	 */
+	synchronized void setPrioDirection(int prioDirection) {
+		this.prioDirection = prioDirection;
 	}
 
 	/**
