@@ -1,5 +1,7 @@
 package elevator.controller;
 
+import java.util.Arrays;
+
 /**
  * The class ElevatorShared is a shared object used for communication
  * between the main Controller and a ElevatorController.
@@ -139,5 +141,16 @@ public class ElevatorShared {
 	 */
 	int getNumberOfFloors(){
 		return floorRequest.length;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuffer sb = new StringBuffer();
+		
+		
+		
+		return "Floor: " + floor + " Position: " + position + "\n" + 
+				"Direction: " + direction + " PrioDirection: " + prioDirection + "\n" +
+				"FloorRequests: " + Arrays.toString(floorRequest) + "\n";
 	}
 }
