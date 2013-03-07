@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
 
 import elevator.rmi.*;
 
@@ -50,6 +49,13 @@ public class Controller implements Runnable, ActionListener{
 	}
 
 	@Override
+	/**
+	 * Creates Elevator controllers, ElevatorShared object and gives references to elevator objects
+	 * to the ElevatorController object.
+	 * Registers the ElevatorControllers as PositionListener and InsideListener to their Elevator
+	 * and start new thread from the ElevatorController objects.
+	 * Then registers itself as a FloorListener.
+	 */
 	public void run() {
 		try {
 			init();
@@ -61,6 +67,9 @@ public class Controller implements Runnable, ActionListener{
 	}
 
 	@Override
+	/**
+	 * Receives floor button presses and calculates which elevator to send to that floor.
+	 */
 	public void actionPerformed(ActionEvent actionEvent) {
 
 		System.out.println("event: " + actionEvent.getActionCommand());

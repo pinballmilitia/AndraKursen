@@ -20,13 +20,19 @@ public class ElevatorController implements Runnable, ActionListener {
 	
 	private static final double DEFPRECISION = 0.001;
 
+	// Semaphore barrier to tell if the elevator is moving or not.
 	private final Semaphore notMoving =  new Semaphore(1);
 
 	private final Elevator elevator;
-	//private boolean shared.getFloorRequestAtIndex(];
 	private ElevatorShared shared;
 	private double precision;
 
+	/**
+	 * Constructs an ElevatorController with a specified Elevator and shared object
+	 * @param elevator RMI interface to an elevator
+	 * @param shared ElevatorShared object shared with the main controller
+	 * @throws RemoteException thrown if there is any RMI problem.
+	 */
 	public ElevatorController(Elevator elevator, ElevatorShared shared) throws RemoteException{
 		this.elevator = elevator;
 		//this.floorRequest = new boolean[numFloors+1];
@@ -44,6 +50,16 @@ public class ElevatorController implements Runnable, ActionListener {
 	 */
 
 	@Override
+	/**
+	 * Receives an ActionEvent with a message containing the current position of the elevator
+	 * or a button that has been pressed.
+	 * 
+	 * If a message with the position is received it will check if the levator is at a floor
+	 * and if it should stop at that floor.
+	 * 
+	 * If a button message is received it will add that floor to the floorRequest shared
+	 * variable. 
+	 */
 	public void actionPerformed(ActionEvent ae) {
 		try{
 			String[] command = ae.getActionCommand().split(" ");
@@ -51,7 +67,7 @@ public class ElevatorController implements Runnable, ActionListener {
 			if(command[0].equals("f")){
 				float position = Float.parseFloat(command[2]);
 				shared.setPosition(position);
-				int currentFloor = 0;//elevator.getScalePosition();
+				int currentFloor = 0;
 
 				currentFloor = (int)(position+0.5);
 				double diff = position - currentFloor; 
@@ -98,6 +114,12 @@ public class ElevatorController implements Runnable, ActionListener {
 	}
 
 	@Override
+	/**
+	 * A loop running forever looks if there is any floorRequest and if there is none the thread will sleep
+	 * If there is a request it will figure out in which direction the elevator should move and then tells 
+	 * the elevator to move in that direction.
+	 * If the elevator is moving the while loop is suspended. 
+	 */
 	public void run() {
 		try {
 			while(true){

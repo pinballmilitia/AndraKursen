@@ -145,9 +145,7 @@ public class ElevatorShared {
 	
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		
-		
+		//StringBuffer sb = new StringBuffer();
 		
 		return "Floor: " + floor + " Position: " + position + "\n" + 
 				"Direction: " + direction + " PrioDirection: " + prioDirection + "\n" +
